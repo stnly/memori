@@ -1,0 +1,76 @@
+#!/bin/sh
+function __mReadme() {
+   cat <<-README
+Usage: m [-a] [-h|--help] [-l <number>] <message>
+
+Current file path: $mPath
+
+   -a                   Lists all memories
+   -h, --help           Shows this
+   -l                   List last 10 lines of memories
+   -l <number>          List last <number> of memories
+
+README
+}
+
+function __mFile() {
+   
+   FILENAME=memori
+   export mPath=$HOME/$FILENAME
+
+   if [[ ! -e $mPath ]]; then
+      touch $mPath
+   fi
+}
+
+function __mWrite() {
+
+   COUNT=`echo $input | wc -m`
+   
+   if  [ "$COUNT" -le 140 ] && [ "$COUNT" != 1 ]; then	
+      echo -e "$DATE $input" >> $mPath
+   else
+      echo "memori: memories should contain something and be less than 140 characters."
+
+   fi
+
+}
+
+function memori() {
+   __mFile
+
+   DATE=`date '+[%A] [%d %B %Y] [%I:%M:%S %p] -'`
+    
+   # note
+   if [ "${1}" = "" ]; then
+      echo Please enter thoughts... Leave blank to exit.
+      read input
+      __mWrite
+
+   # -l if no number is defined, show 10
+   elif [[ "${1}" =~ ^-l ]] && [ "${2}" = "" ]; then
+      tail -n 10 $mPath
+ 
+   # -l <number>
+   elif [[ "${1}" =~ ^-l ]] && [ "${2}" = `` ]; then
+      tail -n $2 $mPath
+
+   # -a   shows all notes
+   elif [[ "${1}" =~ ^-a ]]; then
+      cat $mPath | less
+   
+   # -h, --help   shows readme
+   elif [[ "${1}" =~ ^-h ]] || [[ "${1}" =~ ^--help ]]; then
+      __mReadme
+
+   # unknown
+   elif [[ "${1}" =~ ^- ]]; then
+      echo "memori: unknown option specified: $1"
+      __mReadme
+
+   else
+      input="$@"
+      __mWrite
+   fi
+
+}
